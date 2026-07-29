@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CookBook - Yemek Tarifleri</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- ========================================================== -->
+    <!-- LOADER (Yükleniyor Ekranı)                                 -->
+    <!-- ========================================================== -->
+    <div id="loader" class="loader-overlay">
+        <div class="loader-container">
+            <!-- Animasyonlu Tencere -->
+            <div class="pot">
+                <div class="lid"></div>
+                <div class="body">
+                    <div class="steam s1"></div>
+                    <div class="steam s2"></div>
+                    <div class="steam s3"></div>
+                </div>
+                <div class="handle"></div>
+            </div>
+            <h1 class="loader-title">CookBook</h1>
+            <p class="loader-subtitle">Lezzetli tarifler yükleniyor...</p>
+            <div class="loader-bar">
+                <div class="loader-progress" id="loader-progress"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================== -->
+    <!-- ANA SAYFA                                                  -->
+    <!-- ========================================================== -->
+    <div id="main-site" style="display: none;">
+        <header>
+            <div class="container">
+                <nav>
+                    <div class="logo">
+                        <a href="#" id="logo-link">
+                            <h2>CookBook</h2>
+                        </a>
+                    </div>
+                    <ul>
+                        <li><a href="#" id="home-link">Ana Sayfa</a></li>
+                        <li><a href="#">Kategoriler</a></li>
+                        <li><a href="#">Hakkımızda</a></li>
+                    </ul>
+                    <button class="btn-login">Giriş Yap</button>
+                    <button id="theme-toggle">🌙</button>
+                </nav>
+            </div>
+        </header>
+
+        <main id="main-content">
+            <section class="hero">
+                <div class="container">
+                    <h1>Bugün Ne Pişireceğiz?</h1>
+                    <p>Binlerce tarif arasından seçim yapın.</p>
+                    <div class="search-box">
+                        <input id="search-input" type="text" placeholder="Tarif ara...">
+                        <button id="search-button">Ara</button>
+                    </div>
+                </div>
+            </section>
+
+            <section class="recipes">
+                <div class="container">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                        <h2>Popüler Tarifler</h2>
+                        <button id="reset-filter-btn" style="display: none; background: #e67e22; color: #fff; border: none; padding: 8px 20px; border-radius: 25px; cursor: pointer;">
+                            Tüm Tarifleri Göster
+                        </button>
+                    </div>
+                    <div id="recipe-list"><p>Tarifler yükleniyor...</p></div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Detay Bölümü -->
+        <section id="detail-section">
+            <div class="container">
+                <button class="back-button" id="back-button">← Ana Sayfaya Dön</button>
+                <h1 id="detail-title">Tarif Adı</h1>
+                <div class="detail-content">
+                    <img id="detail-image" src="" alt="Tarif">
+                    <div class="recipe-info">
+                        <p>Kategori: <span id="detail-category"></span></p>
+                        <p>Süre: <span id="detail-time"></span> dk</p>
+                        <p>Puan: ⭐ <span id="detail-rating"></span></p>
+                        <p id="detail-description"></p>
+                    </div>
+                </div>
+                <h2>Malzemeler</h2>
+                <ul id="detail-ingredients" class="detail-list"></ul>
+                <h2>Yapılışı</h2>
+                <ol id="detail-steps" class="detail-list"></ol>
+            </div>
+        </section>
+
+        <!-- Bildirim (Toast) -->
+        <div id="toast" class="toast hidden">
+            <span id="toast-message">Tarif Favorilere eklendi!</span>
+        </div>
+
+        <!-- Kategori Yan Menüsü -->
+        <div class="category-sidebar">
+            <div class="category-trigger">
+                Kategoriler <span class="arrow">▾</span>
+            </div>
+            <div id="category-list" class="category-dropdown">
+                <p>Kategoriler yükleniyor...</p>
+            </div>
+        </div>
+
+        <!-- ========================================================== -->
+        <!-- GİRİŞ / KAYIT / ŞİFREMİ UNUTTUM MODAL                     -->
+        <!-- ========================================================== -->
+        <div id="login-modal" class="modal-overlay">
+            <div class="modal-content">
+                <span class="close-modal">&times;</span>
+                
+                <!-- Sekmeler -->
+                <div class="modal-tabs">
+                    <button class="tab-btn active" data-tab="login">Giriş Yap</button>
+                    <button class="tab-btn" data-tab="register">Kayıt Ol</button>
+                    <button class="tab-btn" data-tab="forgot">Şifremi Unuttum</button>
+                </div>
+
+                <!-- Sosyal Giriş (tüm sekmelerde görünür) -->
+                <div class="social-login">
+                    <button class="social-btn google"><i class="fab fa-google"></i> Google ile</button>
+                    <button class="social-btn apple"><i class="fab fa-apple"></i> Apple ile</button>
+                    <button class="social-btn microsoft"><i class="fab fa-microsoft"></i> Microsoft ile</button>
+                    <button class="social-btn github"><i class="fab fa-github"></i> GitHub ile</button>
+                </div>
+
+                <div class="divider">veya</div>
+
+                <!-- GİRİŞ YAP SEKMESİ -->
+                <div id="tab-login" class="tab-content active">
+                    <form class="auth-form">
+                        <input type="email" placeholder="E-posta adresi" required>
+                        <input type="password" placeholder="Şifre" required>
+                        <button type="submit" class="submit-btn">Giriş Yap</button>
+                    </form>
+                </div>
+
+                <!-- KAYIT OL SEKMESİ -->
+                <div id="tab-register" class="tab-content">
+                    <form class="auth-form">
+                        <input type="text" placeholder="Ad Soyad" required>
+                        <input type="email" placeholder="E-posta adresi" required>
+                        <input type="password" placeholder="Şifre" required>
+                        <input type="password" placeholder="Şifre Tekrar" required>
+                        <button type="submit" class="submit-btn">Kayıt Ol</button>
+                    </form>
+                </div>
+
+                <!-- ŞİFREMİ UNUTTUM SEKMESİ -->
+                <div id="tab-forgot" class="tab-content">
+                    <form class="auth-form">
+                        <input type="email" placeholder="E-posta adresi" required>
+                        <button type="submit" class="submit-btn">Şifremi Sıfırla</button>
+                    </form>
+                    <p style="text-align:center; margin-top:15px; font-size:0.9rem; color:#888;">
+                        Şifre sıfırlama bağlantısı e-posta adresinize gönderilecektir.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
