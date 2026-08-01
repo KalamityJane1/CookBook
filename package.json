@@ -1,0 +1,8 @@
+{
+  "name": "cookbook",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "deepl-node": "^1.17.0"
+  }
+}
