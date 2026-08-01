@@ -45,6 +45,30 @@ async function fetchRecipeById(id) {
 }
 
 // ============================================================
+// DEEPL ÇEVİRİ (Vercel Serverless Function)
+// ============================================================
+async function translateText(text, targetLang = 'tr') {
+    if (!text) return text;
+    if (targetLang === 'en') return text;
+
+    try {
+        const res = await fetch('/api/translate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                text: text, 
+                targetLang: targetLang.toUpperCase() 
+            })
+        });
+        const data = await res.json();
+        return data.translated || text;
+    } catch (error) {
+        console.error('❌ Çeviri hatası:', error);
+        return text;
+    }
+}
+
+// ============================================================
 // DOM
 // ============================================================
 const loader = document.getElementById('loader');
@@ -477,3 +501,27 @@ document.getElementById('theme-toggle').addEventListener('click', function() {
         this.textContent = '🌙';
     }
 });
+
+// ============================================================
+// DEEPL ÇEVİRİ (Backend üzerinden)
+// ============================================================
+async function translateText(text, targetLang = 'tr') {
+    if (!text) return text;
+    if (targetLang === 'en') return text;
+
+    try {
+        const res = await fetch('/api/translate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                text: text, 
+                targetLang: targetLang.toUpperCase() 
+            })
+        });
+        const data = await res.json();
+        return data.translated || text;
+    } catch (error) {
+        console.error('❌ Çeviri hatası:', error);
+        return text;
+    }
+}
