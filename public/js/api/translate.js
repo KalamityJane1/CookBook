@@ -1,3 +1,9 @@
+export const config = {
+    api: {
+        bodyParser: true,
+    },
+};
+
 import deepl from 'deepl-node';
 
 export default async function handler(req, res) {
