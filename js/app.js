@@ -47,12 +47,11 @@ async function fetchRecipeById(id) {
 // ============================================================
 // DEEPL ÇEVİRİ (Vercel Serverless Function)
 // ============================================================
-
-console.log('🟡 translateText çağrıldı, çevrilecek metin:', text);
-
 async function translateText(text, targetLang = 'tr') {
     if (!text) return text;
     if (targetLang === 'en') return text;
+
+    console.log('🟡 translateText çağrıldı, çevrilecek metin:', text);
 
     try {
         const res = await fetch('/api/translate', {
@@ -92,7 +91,7 @@ function renderCategories(tags) {
     const sortedTags = [...tags].sort();
 
     categoryList.innerHTML = `
-        <div class="category-item" data-category="all" style="font-weight:  ">
+        <div class="category-item" data-category="all" style="font-weight: bold; border-bottom: 2px solid #e67e22;">
             Tüm Tarifler
         </div>
         ${sortedTags.map(tag => `
@@ -110,7 +109,7 @@ let allRecipesCache = [];
 let currentPage = 0;
 const PAGE_SIZE = 12;
 
-function renderRecipes(recipes) {
+async function renderRecipes(recipes) {
     if (!recipes || recipes.length === 0) {
         recipeList.innerHTML = '<p class="error-message">Tarif bulunamadı.</p>';
         return;
@@ -118,24 +117,30 @@ function renderRecipes(recipes) {
 
     const favorites = JSON.parse(localStorage.getItem('favorites')) || [];
 
-    recipeList.innerHTML = recipes.map(meal => {
+    // Tüm tarifleri dönüştür (çeviri işlemini burada yap)
+    const translatedRecipes = await Promise.all(recipes.map(async (meal) => {
         const isFav = favorites.includes(meal.idMeal);
         const image = meal.strMealThumb && meal.strMealThumb !== 'null' 
             ? meal.strMealThumb 
             : 'https://via.placeholder.com/300x200?text=Resim+Yok';
         
+        const translatedTitle = await translateText(meal.strMeal);
+        const translatedCategory = await translateText(meal.strCategory || '');
+
         return `
             <div class="recipe-card" data-id="${meal.idMeal}">
                 <div class="favorite-btn" data-id="${meal.idMeal}" style="position: absolute; top: 12px; right: 12px; cursor: pointer; font-size: 1.5rem; z-index: 10; background: rgba(255,255,255,0.8); border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
                     ${isFav ? '❤️' : '🤍'}
                 </div>
-                <img src="${image}" alt="${meal.strMeal || 'Tarif'}" loading="lazy">
-                <h3>${meal.strMeal || 'İsimsiz Tarif'}</h3>
-                <p>${meal.strCategory || 'Çeşitli'} • ${meal.strArea || 'Dünya'}</p>
+                <img src="${image}" alt="${translatedTitle || 'Tarif'}" loading="lazy">
+                <h3>${translatedTitle || 'İsimsiz Tarif'}</h3>
+                <p>${translatedCategory || 'Çeşitli'} • ${meal.strArea || 'Dünya'}</p>
                 <p class="rating">⭐ 4.5</p>
             </div>
         `;
-    }).join('');
+    }));
+
+    recipeList.innerHTML = translatedRecipes.join('');
 }
 
 // ============================================================
@@ -145,19 +150,20 @@ async function showDetail(id) {
     try {
         const meal = await fetchRecipeById(id);
 
-        document.getElementById('detail-title').textContent = meal.strMeal;
+        document.getElementById('detail-title').textContent = await translateText(meal.strMeal);
         document.getElementById('detail-image').src = meal.strMealThumb;
-        document.getElementById('detail-category').textContent = meal.strCategory || 'Çeşitli';
+        document.getElementById('detail-category').textContent = await translateText(meal.strCategory || 'Çeşitli');
         document.getElementById('detail-time').textContent = '30 dk';
         document.getElementById('detail-rating').textContent = '4.5';
-        document.getElementById('detail-description').textContent = meal.strInstructions || 'Nefis bir tarif!';
+        document.getElementById('detail-description').textContent = await translateText(meal.strInstructions || 'Nefis bir tarif!');
 
         const ingredients = [];
         for (let i = 1; i <= 20; i++) {
             const ingredient = meal[`strIngredient${i}`];
             const measure = meal[`strMeasure${i}`];
             if (ingredient && ingredient.trim()) {
-                ingredients.push(`${measure} ${ingredient}`);
+                const translatedIng = await translateText(`${measure} ${ingredient}`);
+                ingredients.push(translatedIng);
             }
         }
 
@@ -165,8 +171,9 @@ async function showDetail(id) {
         ingList.innerHTML = ingredients.map(i => `<li>${i}</li>`).join('');
 
         const steps = meal.strInstructions.split('\r\n').filter(s => s.trim());
+        const translatedSteps = await Promise.all(steps.map(s => translateText(s)));
         const stepsList = document.getElementById('detail-steps');
-        stepsList.innerHTML = steps.map(s => `<li>${s}</li>`).join('');
+        stepsList.innerHTML = translatedSteps.map(s => `<li>${s}</li>`).join('');
 
         document.getElementById('main-content').style.display = 'none';
         document.getElementById('detail-section').classList.add('active');
@@ -196,7 +203,7 @@ async function init() {
         const meals = await fetchAllRecipes();
         allRecipesCache = meals;
         const firstPage = allRecipesCache.slice(0, PAGE_SIZE);
-        renderRecipes(firstPage);
+        await renderRecipes(firstPage);
         currentPage = 1;
 
         console.log(`✅ ${allRecipesCache.length} tarif yüklendi.`);
@@ -229,7 +236,7 @@ document.addEventListener('DOMContentLoaded', init);
 let isLoading = false;
 let hasMore = true;
 
-function loadMoreRecipes() {
+async function loadMoreRecipes() {
     if (isLoading || !hasMore || !allRecipesCache.length) return;
 
     isLoading = true;
@@ -247,22 +254,24 @@ function loadMoreRecipes() {
     }
 
     const favorites = JSON.parse(localStorage.getItem('favorites')) || [];
-    const newHtml = newRecipes.map(meal => {
+    const translatedRecipes = await Promise.all(newRecipes.map(async (meal) => {
         const isFav = favorites.includes(meal.idMeal);
+        const translatedTitle = await translateText(meal.strMeal);
+        const translatedCategory = await translateText(meal.strCategory || '');
         return `
             <div class="recipe-card" data-id="${meal.idMeal}">
                 <div class="favorite-btn" data-id="${meal.idMeal}" style="position: absolute; top: 12px; right: 12px; cursor: pointer; font-size: 1.5rem; z-index: 10; background: rgba(255,255,255,0.8); border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
                     ${isFav ? '❤️' : '🤍'}
                 </div>
                 <img src="${meal.strMealThumb}" alt="${meal.strMeal}" loading="lazy">
-                <h3>${meal.strMeal}</h3>
-                <p>${meal.strCategory || 'Çeşitli'} • ${meal.strArea || 'Dünya'}</p>
+                <h3>${translatedTitle || 'İsimsiz Tarif'}</h3>
+                <p>${translatedCategory || 'Çeşitli'} • ${meal.strArea || 'Dünya'}</p>
                 <p class="rating">⭐ 4.5</p>
             </div>
         `;
-    }).join('');
+    }));
 
-    recipeList.insertAdjacentHTML('beforeend', newHtml);
+    recipeList.insertAdjacentHTML('beforeend', translatedRecipes.join(''));
     currentPage++;
     console.log(`✅ ${newRecipes.length} yeni tarif eklendi.`);
     isLoading = false;
@@ -278,9 +287,6 @@ window.addEventListener('scroll', function() {
     }
 });
 
-// ============================================================
-// KATEGORİ FİLTRELEME (İngilizce)
-// ============================================================
 // ============================================================
 // KATEGORİ FİLTRELEME (İngilizce)
 // ============================================================
@@ -302,7 +308,7 @@ categoryList.addEventListener('click', async function(e) {
 
     if (category === 'all') {
         const firstPage = allRecipesCache.slice(0, PAGE_SIZE);
-        renderRecipes(firstPage);
+        await renderRecipes(firstPage);
         currentPage = 1;
         hasMore = true;
         resetBtn.style.display = 'none';
@@ -310,7 +316,7 @@ categoryList.addEventListener('click', async function(e) {
         const filtered = allRecipesCache.filter(r => 
             r.strCategory === category
         );
-        renderRecipes(filtered);
+        await renderRecipes(filtered);
         resetBtn.style.display = 'inline-block';
         hasMore = false;
     }
@@ -323,7 +329,7 @@ categoryList.addEventListener('click', async function(e) {
 // ============================================================
 resetBtn.addEventListener('click', async function() {
     const firstPage = allRecipesCache.slice(0, PAGE_SIZE);
-    renderRecipes(firstPage);
+    await renderRecipes(firstPage);
     currentPage = 1;
     hasMore = true;
     resetBtn.style.display = 'none';
@@ -396,7 +402,7 @@ document.getElementById('search-button').addEventListener('click', async functio
         r.strMeal.toLowerCase().includes(query) ||
         r.strCategory.toLowerCase().includes(query)
     );
-    renderRecipes(filtered);
+    await renderRecipes(filtered);
     hasMore = false;
     resetBtn.style.display = 'none';
 });
@@ -504,27 +510,3 @@ document.getElementById('theme-toggle').addEventListener('click', function() {
         this.textContent = '🌙';
     }
 });
-
-// ============================================================
-// DEEPL ÇEVİRİ (Backend üzerinden)
-// ============================================================
-async function translateText(text, targetLang = 'tr') {
-    if (!text) return text;
-    if (targetLang === 'en') return text;
-
-    try {
-        const res = await fetch('/api/translate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                text: text, 
-                targetLang: targetLang.toUpperCase() 
-            })
-        });
-        const data = await res.json();
-        return data.translated || text;
-    } catch (error) {
-        console.error('❌ Çeviri hatası:', error);
-        return text;
-    }
-}
