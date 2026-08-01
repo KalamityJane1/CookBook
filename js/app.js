@@ -47,6 +47,9 @@ async function fetchRecipeById(id) {
 // ============================================================
 // DEEPL ÇEVİRİ (Vercel Serverless Function)
 // ============================================================
+
+console.log('🟡 translateText çağrıldı, çevrilecek metin:', text);
+
 async function translateText(text, targetLang = 'tr') {
     if (!text) return text;
     if (targetLang === 'en') return text;
